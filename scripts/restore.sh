@@ -32,7 +32,7 @@ fi
 
 # 3. Checking a backup must not require the confirmation flag or a running stack.
 if [[ "${VALIDATE_ONLY:-}" == "YES" ]]; then
-  log "Archive is a valid, intact Mini Story backup: $ARCHIVE"
+  log "Archive is a valid, intact Story Tavern backup: $ARCHIVE"
   exit 0
 fi
 

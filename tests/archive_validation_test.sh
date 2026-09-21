@@ -5,7 +5,7 @@
 # `tar -tzf "$a" | grep -q pattern` made grep exit at the first match, tar die
 # from SIGPIPE ("write error"), and `set -o pipefail` turn that into a failed
 # pipeline. Small archives hid it because tar finished writing first; a realistic
-# one did not, and a perfectly good backup was rejected as "not a Mini Story
+# one did not, and a perfectly good backup was rejected as "not a Story Tavern
 # backup" on the first real restore.
 set -Eeuo pipefail
 

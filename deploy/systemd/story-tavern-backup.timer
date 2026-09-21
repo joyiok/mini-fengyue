@@ -1,5 +1,5 @@
 [Unit]
-Description=Daily Mini Story backup
+Description=Daily Story Tavern backup
 
 [Timer]
 OnCalendar=daily

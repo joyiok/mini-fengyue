@@ -90,7 +90,7 @@ jobs:
         run: |
           # Enough entries that the listing is still streaming: this is the shape
           # that exposed a `tar | grep -q` SIGPIPE bug under pipefail, where a
-          # valid backup was rejected as "not a Mini Story backup".
+          # valid backup was rejected as "not a Story Tavern backup".
           mkdir -p data/chats
           for i in $(seq 1 2000); do : > "data/chats/chat_$i.jsonl"; done
           archive="$(./scripts/backup.sh)"
@@ -107,7 +107,7 @@ jobs:
             exit 1
           fi
 
-          # 2. Archive that is not a Mini Story backup.
+          # 2. Archive that is not a Story Tavern backup.
           mkdir -p /tmp/not-a-backup
           echo hello > /tmp/not-a-backup/hello.txt
           tar -czf /tmp/not-a-backup.tar.gz -C /tmp not-a-backup

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Shared helpers for the Mini Story deployment scripts.
+# Shared helpers for the Story Tavern deployment scripts.
 #
 # This file is meant to be sourced, not executed:
 #   ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -155,7 +155,7 @@ sha256_line_of() {
   printf '%s  %s\n' "$(sha256_of "$1")" "$1"
 }
 
-# Validate that a file is a restorable Mini Story archive. Prints the reason to
+# Validate that a file is a restorable Story Tavern archive. Prints the reason to
 # stderr and returns non-zero when it is not.
 #
 # The listing is read in one pass on purpose. Checking it with a pipeline such
@@ -178,7 +178,7 @@ validate_backup_archive() {
   fi
 
   if ! grep -Eq '^\./(data|config)/' <<<"$listing"; then
-    printf 'Error: %s contains no ./data or ./config entry; it does not look like a Mini Story backup.\n' "$archive" >&2
+    printf 'Error: %s contains no ./data or ./config entry; it does not look like a Story Tavern backup.\n' "$archive" >&2
     return 1
   fi
 

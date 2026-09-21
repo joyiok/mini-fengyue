@@ -1,5 +1,5 @@
 [Unit]
-Description=Back up the Mini Story SillyTavern deployment
+Description=Back up the Story Tavern deployment
 Documentation=file:/opt/story-tavern/README.md
 After=docker.service
 Requires=docker.service

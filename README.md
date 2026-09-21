@@ -1,4 +1,4 @@
-# Mini Story
+# Story Tavern
 
 一个面向个人使用的 SillyTavern（酒馆）部署包：把角色卡、世界书、聊天记录、内置总结记忆、图片/TTS 接口和登录保护放在一台服务器上，用 Caddy 负责反向代理与 HTTPS。
 

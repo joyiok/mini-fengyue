@@ -8,7 +8,7 @@ source "$ROOT_DIR/scripts/lib.sh"
 
 # Guard against running the purge from the wrong directory.
 if [[ ! -f docker-compose.yml || ! -f Caddyfile ]]; then
-  die "Run this script from the Mini Story repository (docker-compose.yml and Caddyfile not found)."
+  die "Run this script from the Story Tavern repository (docker-compose.yml and Caddyfile not found)."
 fi
 
 if have docker && docker compose version >/dev/null 2>&1; then
