@@ -1,0 +1,98 @@
+# Private single-user deployment profile for SillyTavern.
+# Runtime data and chat history live under ./data and must not be committed.
+
+dataRoot: ./data
+
+listen: true
+listenAddress:
+  ipv4: 0.0.0.0
+  ipv6: '[::]'
+protocol:
+  ipv4: true
+  ipv6: false
+dnsPreferIPv6: false
+
+browserLaunch:
+  enabled: false
+  browser: default
+  hostname: auto
+  port: -1
+  avoidLocalhost: false
+
+port: 8000
+heartbeatInterval: 30
+enableKeepAlive: true
+
+# TLS terminates at Caddy. Do not enable a second certificate here.
+ssl:
+  enabled: false
+  certPath: ./certs/cert.pem
+  keyPath: ./certs/privkey.pem
+  keyPassphrase: ''
+
+# Login is handled by SillyTavern's account system.
+whitelistMode: false
+enableForwardedWhitelist: true
+whitelist:
+  - 127.0.0.1
+  - ::1
+whitelistDockerHosts: true
+basicAuthMode: false
+basicAuthUser:
+  username: user
+  password: change-me
+enableUserAccounts: true
+enableDiscreetLogin: true
+perUserBasicAuth: false
+
+sso:
+  autheliaAuth: false
+  authentikAuth: false
+  trustedProxies:
+    - 127.0.0.1
+    - ::1
+
+# Keep host filtering disabled until a real domain is selected.
+hostWhitelist:
+  enabled: false
+  scan: true
+  hosts: []
+
+privateAddressWhitelist:
+  enabled: false
+  allowUnresolvedHosts: false
+  log:
+    blockedRequests: true
+    allowedRequests: false
+  allowedRanges:
+    - 127.0.0.0/8
+    - '::1/128'
+
+sessionTimeout: -1
+disableCsrfProtection: false
+securityOverride: false
+
+logging:
+  enableAccessLog: true
+  minLogLevel: 1
+
+rateLimiting:
+  preferRealIpHeader: true
+  basicAuthMaxAttempts: 5
+  accountsLoginMaxAttempts: 5
+  accountsRecoverMaxAttempts: 5
+  accountsResetMaxAttempts: 5
+
+forwardedHeaders:
+  xRealIp: true
+  xForwardedFor: true
+  cfConnectingIp: false
+
+backups:
+  allowFullDataBackup: true
+  common:
+    numberOfBackups: 50
+  chat:
+    enabled: true
+    checkIntegrity: true
+

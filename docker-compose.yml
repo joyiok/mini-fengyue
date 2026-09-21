@@ -1,0 +1,51 @@
+name: story-tavern
+
+services:
+  sillytavern:
+    image: ghcr.io/sillytavern/sillytavern:${SILLYTAVERN_VERSION:-latest}
+    restart: unless-stopped
+    environment:
+      PUID: "${PUID:-1000}"
+      PGID: "${PGID:-1000}"
+      TZ: "${TZ:-Asia/Shanghai}"
+      SILLYTAVERN_HEARTBEATINTERVAL: "30"
+    volumes:
+      - ./config:/home/node/app/config:rw
+      - ./data:/home/node/app/data:rw
+      - ./plugins:/home/node/app/plugins:rw
+      - ./extensions:/home/node/app/public/scripts/extensions/third-party:rw
+    ports:
+      - "${ST_LOCAL_PORT:-127.0.0.1:8000}:8000"
+    healthcheck:
+      test: ["CMD", "node", "src/healthcheck.js"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+    networks:
+      - app
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      sillytavern:
+        condition: service_healthy
+    environment:
+      APP_DOMAIN: "${APP_DOMAIN:-:80}"
+      CADDY_EMAIL: "${CADDY_EMAIL:-}"
+      TZ: "${TZ:-Asia/Shanghai}"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy/data:/data
+      - ./caddy/config:/config
+    networks:
+      - app
+
+networks:
+  app:
+    driver: bridge
+

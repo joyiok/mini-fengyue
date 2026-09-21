@@ -1,0 +1,17 @@
+{$APP_DOMAIN} {
+    # Caddy supplies the TLS certificate automatically when APP_DOMAIN is a
+    # real DNS name. For a private/IP-only test, set APP_DOMAIN=:80.
+    reverse_proxy sillytavern:8000
+
+    encode zstd gzip
+
+    header {
+        # Basic browser hardening. SillyTavern still owns its session and CSRF
+        # protection; these headers do not replace application authentication.
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        X-Frame-Options "SAMEORIGIN"
+        -Server
+    }
+}
+
