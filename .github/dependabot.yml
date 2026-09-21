@@ -1,0 +1,11 @@
+version: 2
+updates:
+  # Keep the CI actions current; the workflows pin major versions on purpose so
+  # this is the main way they get security and runtime updates.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"

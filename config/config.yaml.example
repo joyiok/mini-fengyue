@@ -1,0 +1,134 @@
+# Private single-user deployment profile for SillyTavern.
+#
+# This file is a TEMPLATE. scripts/install.sh copies it to config/config.yaml
+# on first install, and SillyTavern rewrites config/config.yaml on every start
+# (it fills in missing keys from its own defaults). That is why
+# config/config.yaml is git-ignored and this template is the source of truth:
+# edit the profile here, then re-run ./scripts/install.sh -- or copy the file
+# over manually.
+#
+# Keys that are omitted below keep SillyTavern's upstream defaults. On first
+# start SillyTavern materializes them into config/config.yaml, which is why the
+# runtime file is much longer than this template.
+#
+# Runtime data and chat history live under ./data and must not be committed.
+
+dataRoot: ./data
+
+listen: true
+listenAddress:
+  ipv4: 0.0.0.0
+  ipv6: '[::]'
+protocol:
+  ipv4: true
+  ipv6: false
+dnsPreferIPv6: false
+
+browserLaunch:
+  enabled: false
+  browser: default
+  hostname: auto
+  port: -1
+  avoidLocalhost: false
+
+port: 8000
+# Writes a heartbeat file that the Docker healthcheck reads. Keep this above 0
+# or the container is reported unhealthy and Caddy never starts.
+heartbeatInterval: 30
+enableKeepAlive: true
+
+# TLS terminates at Caddy. Do not enable a second certificate here.
+ssl:
+  enabled: false
+  certPath: ./certs/cert.pem
+  keyPath: ./certs/privkey.pem
+  keyPassphrase: ''
+
+# Login is handled by SillyTavern's account system. Caddy publishes only
+# 80/443, and the SillyTavern port itself stays bound to loopback.
+whitelistMode: false
+enableForwardedWhitelist: true
+whitelist:
+  - 127.0.0.1
+  - ::1
+whitelistDockerHosts: true
+basicAuthMode: false
+# basicAuthUser is deliberately absent: the placeholder credentials that used to
+# live here were never validated by SillyTavern. If you turn basicAuthMode on,
+# set a real username and a strong password here yourself.
+enableUserAccounts: true
+# On an empty data root SillyTavern ALWAYS creates a password-less
+# `default-user` admin and then refuses to start until that account has a
+# password. It has to be that way: when `user.password` is empty the login
+# handler skips the password check entirely, so anyone who can reach the page
+# could sign in as that admin. scripts/install.sh therefore sets a generated
+# password with recover.js before the first healthy start.
+#
+# whitelistMode stays off on purpose: with enableForwardedWhitelist the real
+# client IP from X-Forwarded-For would be checked against the whitelist, and
+# remote browsers are not in it. Access control is the account system.
+enableDiscreetLogin: true
+perUserBasicAuth: false
+
+sso:
+  autheliaAuth: false
+  authentikAuth: false
+  trustedProxies:
+    - 127.0.0.1
+    - ::1
+
+# Keep host filtering disabled until a real domain is selected.
+hostWhitelist:
+  enabled: false
+  scan: true
+  hosts: []
+
+privateAddressWhitelist:
+  enabled: false
+  allowUnresolvedHosts: false
+  log:
+    blockedRequests: true
+    allowedRequests: false
+  allowedRanges:
+    - 127.0.0.0/8
+    - '::1/128'
+
+# -1 means sessions never expire. Convenient for a single user, but any browser
+# that ever logged in stays logged in. Set a value in seconds (for example
+# 604800 for seven days) if this deployment is reachable from the public
+# internet.
+sessionTimeout: -1
+disableCsrfProtection: false
+securityOverride: false
+
+logging:
+  enableAccessLog: true
+  minLogLevel: 1
+
+# Rate limits count per client IP. preferRealIpHeader is safe here only because
+# Caddy is the only thing that can reach the container (loopback binding).
+rateLimiting:
+  preferRealIpHeader: true
+  basicAuthMaxAttempts: 5
+  accountsLoginMaxAttempts: 5
+  accountsRecoverMaxAttempts: 5
+  accountsResetMaxAttempts: 5
+
+forwardedHeaders:
+  xRealIp: true
+  xForwardedFor: true
+  cfConnectingIp: false
+
+# Server-side plugins are DISABLED. ./plugins is mounted, but SillyTavern will
+# not load anything from it until you set enableServerPlugins: true, and doing
+# so lets that code run inside the container. See README "服务端插件".
+enableServerPlugins: false
+enableServerPluginsAutoUpdate: false
+
+backups:
+  allowFullDataBackup: true
+  common:
+    numberOfBackups: 50
+  chat:
+    enabled: true
+    checkIntegrity: true

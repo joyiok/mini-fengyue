@@ -13,5 +13,11 @@
         X-Frame-Options "SAMEORIGIN"
         -Server
     }
-}
 
+    # No `log` block on purpose: SillyTavern writes its own access log to
+    # data/access.log, and Caddy's default error-only logging to the container
+    # output is enough for a single-user deployment.
+
+    # Do not add `admin off` here: the Compose healthcheck probes Caddy's local
+    # admin API on 127.0.0.1:2019, which also keeps the endpoint off the network.
+}

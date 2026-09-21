@@ -1,7 +1,10 @@
+# Nothing in this repository builds an image (Compose pulls prebuilt images), so
+# this file only documents what must never be shipped in an image layer if you
+# ever add a build context.
 .git
 .env
+.env.*
 backups
 data
-caddy/data
-caddy/config
-
+caddy
+config/config.yaml

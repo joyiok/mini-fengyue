@@ -1,0 +1,16 @@
+[Unit]
+Description=Back up the Mini Story SillyTavern deployment
+Documentation=file:/opt/story-tavern/README.md
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+# Adjust WorkingDirectory, User and Group to match your checkout and its owner.
+WorkingDirectory=/opt/story-tavern
+ExecStart=/opt/story-tavern/scripts/backup.sh
+User=ubuntu
+Group=ubuntu
+# Rotation is read from .env (BACKUP_KEEP); override it here if you prefer.
+#Environment=BACKUP_KEEP=30
+Nice=10

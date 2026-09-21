@@ -1,27 +1,126 @@
 name: Validate deployment bundle
 
-"on":
-  push: {}
-  pull_request: {}
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
-  validate:
+  lint:
+    name: Shell and whitespace
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Validate shell syntax
-        run: bash -n scripts/*.sh
+      - name: Check shell syntax
+        run: bash -n scripts/*.sh tests/*.sh
 
-      - name: Validate Compose configuration
-        run: |
-          cp .env.example .env
-          chmod 600 .env
-          ./scripts/preflight.sh
+      - name: Run ShellCheck
+        run: shellcheck --severity=style --external-sources scripts/*.sh tests/*.sh
 
       - name: Check whitespace errors
         run: git diff --check
+
+  configuration:
+    name: Compose profile and Caddyfile
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Prepare .env
+        run: |
+          cp .env.example .env
+          chmod 600 .env
+
+      - name: Test the .env parser
+        run: ./tests/env_parser_test.sh
+
+      - name: Test archive validation
+        run: ./tests/archive_validation_test.sh
+
+      - name: Validate Compose configuration
+        run: ./scripts/preflight.sh
+
+      - name: Validate Caddyfile
+        run: |
+          docker run --rm \
+            -e APP_DOMAIN=chat.example.com \
+            -v "$PWD/Caddyfile:/etc/caddy/Caddyfile:ro" \
+            caddy:2-alpine caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+
+  backup:
+    name: Backup and restore guards
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Prepare .env
+        run: |
+          cp .env.example .env
+          chmod 600 .env
+
+      - name: Run backup.sh on a fresh checkout
+        run: ./scripts/backup.sh
+
+      - name: Verify archive, checksum and absence of partial files
+        run: |
+          archive="$(ls -1t backups/story-tavern-*.tar.gz | head -n1)"
+          test -s "$archive"
+          sha256sum --check "${archive}.sha256"
+          tar -tzf "$archive" >/dev/null
+          test -z "$(find backups -name '*.partial' -print -quit)"
+
+      - name: Verify rotation keeps the requested number of archives
+        run: |
+          BACKUP_KEEP=1 ./scripts/backup.sh
+          BACKUP_KEEP=1 ./scripts/backup.sh
+          test "$(find backups -maxdepth 1 -name 'story-tavern-*.tar.gz' | wc -l)" -eq 1
+
+      - name: Verify a realistic archive passes restore's validation
+        run: |
+          # Enough entries that the listing is still streaming: this is the shape
+          # that exposed a `tar | grep -q` SIGPIPE bug under pipefail, where a
+          # valid backup was rejected as "not a Mini Story backup".
+          mkdir -p data/chats
+          for i in $(seq 1 2000); do : > "data/chats/chat_$i.jsonl"; done
+          archive="$(./scripts/backup.sh)"
+
+          VALIDATE_ONLY=YES ./scripts/restore.sh "$archive"
+
+      - name: Verify restore.sh refuses unsafe restores
+        run: |
+          archive="$(ls -1t backups/story-tavern-*.tar.gz | head -n1)"
+
+          # 1. No explicit confirmation: must refuse before touching the stack.
+          if ./scripts/restore.sh "$archive"; then
+            echo "restore.sh proceeded without CONFIRM_RESTORE=YES"
+            exit 1
+          fi
+
+          # 2. Archive that is not a Mini Story backup.
+          mkdir -p /tmp/not-a-backup
+          echo hello > /tmp/not-a-backup/hello.txt
+          tar -czf /tmp/not-a-backup.tar.gz -C /tmp not-a-backup
+          if CONFIRM_RESTORE=YES ./scripts/restore.sh /tmp/not-a-backup.tar.gz; then
+            echo "restore.sh accepted an unrelated archive"
+            exit 1
+          fi
+
+          # 3. Archive whose checksum does not match.
+          printf '%s  %s\n' \
+            '0000000000000000000000000000000000000000000000000000000000000000' "$archive" \
+            > "${archive}.sha256"
+          if CONFIRM_RESTORE=YES ./scripts/restore.sh "$archive"; then
+            echo "restore.sh ignored a checksum mismatch"
+            exit 1
+          fi

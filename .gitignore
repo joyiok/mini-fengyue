@@ -1,3 +1,24 @@
+# Secrets
 .env
 .env.*
 !.env.example
+
+# Runtime data: chats, character cards, API keys, in-app backups.
+/data/
+/backups/
+/caddy/
+
+# Generated from config/config.yaml.example by scripts/install.sh, then
+# rewritten by SillyTavern on every start.
+/config/config.yaml
+
+# Third-party code dropped into the mount points. Force-add a specific file with
+# `git add -f` if you really want to version it.
+/plugins/*
+!/plugins/.gitkeep
+/extensions/*
+!/extensions/.gitkeep
+
+# Editor and OS cruft
+.DS_Store
+*.swp
