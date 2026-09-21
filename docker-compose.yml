@@ -4,6 +4,10 @@ services:
   sillytavern:
     image: ghcr.io/sillytavern/sillytavern:${SILLYTAVERN_VERSION:-latest}
     restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 30s
     environment:
       PUID: "${PUID:-1000}"
       PGID: "${PGID:-1000}"
@@ -28,6 +32,10 @@ services:
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 30s
     depends_on:
       sillytavern:
         condition: service_healthy
@@ -48,4 +56,3 @@ services:
 networks:
   app:
     driver: bridge
-

@@ -22,6 +22,7 @@ if [[ ! -f .env ]]; then
   echo "Created .env from .env.example. Edit APP_DOMAIN before using a public domain."
 fi
 
+bash ./scripts/preflight.sh
 docker compose pull
 docker compose up -d
 

@@ -32,6 +32,10 @@ chmod +x scripts/*.sh
 
 第一次打开后创建唯一的 SillyTavern 账户。账户、角色、聊天和设置都保存在 `data/`，不要提交到 GitHub。
 
+安装脚本会先执行 `scripts/preflight.sh`：检查 Docker Compose、`.env`、回环端口绑定和 Compose 配置。它会拒绝把 SillyTavern 的 8000 端口直接绑定到公网。
+
+如果用 1Panel，创建 Docker Compose 应用后把这个仓库目录作为项目目录，复制 `.env.example` 为 `.env` 并填写域名，再运行 `scripts/install.sh`。面板和云防火墙只需要放行 80/443；不要额外放行 8000。
+
 ## 连接模型
 
 在酒馆的 API Connections 中选择对应的 Chat Completion 后端。自建 vLLM、llama.cpp、One API 或其他 OpenAI-compatible 服务通常使用 Custom/OpenAI-compatible 接口；密钥只保存在服务器上的酒馆数据中，不写进这个仓库。
@@ -54,17 +58,28 @@ Mem0、Graphiti 这类外部记忆服务不在第一版默认启动，因为它�
 ./scripts/check.sh
 ```
 
-备份脚本默认不打包 `.env`，避免把域名配置或密钥混进备份。恢复是覆盖操作，必须显式确认：
+`update.sh` 会在拉取新镜像前自动备份。备份脚本默认保留最近 14 份，并为每个归档生成 `.sha256` 校验文件；可通过 `BACKUP_KEEP=30 ./scripts/backup.sh` 调整数量。备份脚本默认不打包 `.env`，避免把域名配置或密钥混进备份。恢复是覆盖操作，必须显式确认：
 
 ```bash
 CONFIRM_RESTORE=YES ./scripts/restore.sh backups/story-tavern-YYYYmmdd-HHMMSS.tar.gz
 ```
+
+更新代码和 Compose 配置时使用：
+
+```bash
+git pull --ff-only
+./scripts/update.sh
+./scripts/check.sh
+```
+
+`restore.sh` 会先检查归档路径，恢复时不保留归档中的文件属主和权限，减少误操作风险。
 
 ## 安全边界
 
 - 不要把 `.env`、`data/`、角色卡、聊天记录或 API Key 提交到 GitHub。
 - 不要直接把 SillyTavern 的 8000 端口映射到公网；Compose 已默认绑定到服务器本机回环地址。
 - Caddy 对外只开放 80/443；服务器防火墙也应只允许必要端口。
+- `.env` 建议保持 `chmod 600`；`BACKUP_KEEP` 只控制本机备份轮换，不会把密钥写入 Git。
 - 部署完成后禁止 root 密码 SSH，改用密钥并限制 SSH 来源 IP。
 - 不要把未成年人相关内容、违法内容或真实个人敏感资料导入公开分享的角色/知识库。
 
@@ -72,4 +87,3 @@ CONFIRM_RESTORE=YES ./scripts/restore.sh backups/story-tavern-YYYYmmdd-HHMMSS.ta
 
 - SillyTavern Docker 安装文档：<https://docs.sillytavern.app/installation/docker/>
 - SillyTavern 管理与远程访问说明：<https://docs.sillytavern.app/administration/>
-
